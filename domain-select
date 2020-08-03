@@ -1,0 +1,39 @@
+#!/usr/bin/env php
+<?php
+
+while($args = fgets(STDIN)) {
+  list($args, $host) = explode('@', rtrim ($args, PHP_EOL));
+  $site = select_site($args);
+  if ($host == parse_url($site, PHP_URL_HOST)) {
+    $site = "NULL";
+  }
+  echo $site . PHP_EOL;
+}
+
+function select_site($accept_language_header) {
+
+  static $lang_site_map = [
+    'en' => 'https://www.example.com/',
+    'sv' => 'https://www.exempel.se/',
+  ];
+
+  $accept_languages = q_value_sort($accept_language_header);
+  foreach ($accept_languages as $lang) {
+    if (isset($lang_site_map[$lang])) return $lang_site_map[$lang];
+    $lang = substr($lang, 0, 2);
+    if (isset($lang_site_map[$lang])) return $lang_site_map[$lang];
+    return 'NULL';
+  }
+
+}
+
+function q_value_sort($in) {
+  $out = array_reduce(
+    explode(',', $in), function ($r, $el) {
+      list($l, $q) = array_merge(explode(';q=', $el), [1]);
+      $r[$q] = $l;
+      return $r;
+    }, []);
+  krsort($out);
+  return $out;
+}
